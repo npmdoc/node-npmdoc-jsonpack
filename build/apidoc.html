@@ -1,0 +1,948 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="https://github.com/sapienlab/jsonpack"
+
+    >jsonpack (v1.1.5)</a>
+</h1>
+<h4>A compression algorithm for JSON</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.jsonpack">module jsonpack</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.jsonpack.pack">
+            function <span class="apidocSignatureSpan">jsonpack.</span>pack
+            <span class="apidocSignatureSpan">(json, options)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.jsonpack.unpack">
+            function <span class="apidocSignatureSpan">jsonpack.</span>unpack
+            <span class="apidocSignatureSpan">(packed, options)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">jsonpack.</span>JSON</span>
+
+        </li>
+
+    </ol></li>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.jsonpack.pack">module jsonpack.pack</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.jsonpack.pack.pack">
+            function <span class="apidocSignatureSpan">jsonpack.</span>pack
+            <span class="apidocSignatureSpan">(json, options)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.jsonpack.unpack">module jsonpack.unpack</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.jsonpack.unpack.unpack">
+            function <span class="apidocSignatureSpan">jsonpack.</span>unpack
+            <span class="apidocSignatureSpan">(packed, options)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.jsonpack" id="apidoc.module.jsonpack">module jsonpack</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.jsonpack.pack" id="apidoc.element.jsonpack.pack">
+        function <span class="apidocSignatureSpan">jsonpack.</span>pack
+        <span class="apidocSignatureSpan">(json, options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">pack = function (json, options) {
+
+			// Canonizes the options
+			options = options || {};
+
+			// A shorthand for debugging
+			var verbose = options.verbose || false;
+
+			verbose &#x26;&#x26; console.log(&#x27;Normalize the JSON Object&#x27;);
+
+			// JSON as Javascript Object (Not string representation)
+			json = typeof json === &#x27;string&#x27; ? this.JSON.parse(json) : json;
+
+			verbose &#x26;&#x26; console.log(&#x27;Creating a empty dictionary&#x27;);
+
+			// The dictionary
+			var dictionary = {
+				strings : [],
+				integers : [],
+				floats : []
+			};
+
+			verbose &#x26;&#x26; console.log(&#x27;Creating the AST&#x27;);
+
+			// The AST
+			var ast = (function recursiveAstBuilder(item) {
+
+				verbose &#x26;&#x26; console.log(&#x27;Calling recursiveAstBuilder with &#x27; + this.JSON.stringify(item));
+
+				// The type of the item
+				var type = typeof item;
+
+				// Case 7: The item is null
+				if (item === null) {
+					return {
+						type : &#x27;null&#x27;,
+						index : TOKEN_NULL
+					};
+				}
+				
+				//add undefined
+				if (typeof item === &#x27;undefined&#x27;) {
+					return {
+						type : &#x27;undefined&#x27;,
+						index : TOKEN_UNDEFINED
+					};
+				}
+
+				// Case 1: The item is Array Object
+				if ( item instanceof Array) {
+
+					// Create a new sub-AST of type Array (@)
+					var ast = [&#x27;@&#x27;];
+
+					// Add each items
+					for (var i in item) {
+						
+						if (!item.hasOwnProperty(i)) continue;
+
+						ast.push(recursiveAstBuilder(item[i]));
+					}
+
+					// And return
+					return ast;
+
+				}
+
+				// Case 2: The item is Object
+				if (type === &#x27;object&#x27;) {
+
+					// Create a new sub-AST of type Object ($)
+					var ast = [&#x27;$&#x27;];
+
+					// Add each items
+					for (var key in item) {
+
+						if (!item.hasOwnProperty(key))
+							continue;
+
+						ast.push(recursiveAstBuilder(key));
+						ast.push(recursiveAstBuilder(item[key]));
+					}
+
+					// And return
+					return ast;
+
+				}
+
+				// Case 3: The item empty string
+				if (item === &#x27;&#x27;) {
+					return {
+						type : &#x27;empty&#x27;,
+						index : TOKEN_EMPTY_STRING
+					};
+				}
+
+				// Case 4: The item is String
+				if (type === &#x27;string&#x27;) {
+
+					// The index of that word in the dictionary
+					var index = _indexOf.call(dictionary.strings, item);
+
+					// If not, add to the dictionary and actualize the index
+					if (index == -1) {
+						dictionary.strings.push(_encode(item));
+						index = dictionary.strings.length - 1;
+					}
+
+					// Return the token
+					return {
+						type : &#x27;strings&#x27;,
+						index : index
+					};
+				}
+
+				// Case 5: The item is integer
+				if (type === &#x27;number&#x27; &#x26;&#x26; item % 1 === 0) {
+
+					// The index of that number in the dictionary
+					var index = _indexOf.call(dictionary.integers, item);
+
+					// If not, add to the dictionary and actualize the index
+					if (index == -1) {
+						dictionary.integers.push(_base10To36(item));
+						index = dictionary.integers.length - 1;
+					}
+
+					// Return the token
+					return {
+						type : &#x27;integers&#x27;,
+						index : index
+					};
+				}
+
+				// Case 6: The item is float
+				if (type === &#x27;number&#x27;) {
+					// The index of that number in the dictionary
+					var index = _indexOf.call(dictionary.floats, item);
+
+					// If not, add to the dictionary and actualize the index
+					if (index == -1) {
+						// Float not use base 36
+						dictionary.floats.push(item);
+						index = dictionary.floats.length - 1;
+					}
+
+					// Return the token
+					return {
+						type : &#x27;floats&#x27;,
+						index : index
+					};
+				}
+
+				// Case 7: The item is boolean
+				if (type === &#x27;boolean&#x27;) {
+					return {
+						type : &#x27;boolean&#x27;,
+						index : item ? TOKEN_TRUE : TOKEN_FALSE
+					};
+				}
+
+				// Default
+				throw new Error(&#x27;Unexpected argument of type &#x27; + typeof (item));
+
+			})(json);
+
+			// A set of shorthands proxies for the length of the dictionaries
+			var stringLength = dictionary.strings.length;
+			var integerLength = dictionary.integers.length;
+			var floatLength = dictionary.floats.length;
+
+			verbose &#x26;&#x26; console.log(&#x27;Parsing the dictionary&#x27;);
+
+			// Create a raw dictionary
+			var packed = dictionary.strings.join(&#x27;|&#x27;);
+			packed += &#x27;^&#x27; + dictionary.integers.join(&#x27;|&#x27;);
+			packed += &#x27;^&#x27; + dictionary.floats.join(&#x27;|&#x27;);
+
+			verbose &#x26;&#x26; console.log(&#x27;Parsing the structu ...</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+**Quick example**
+```javascript
+// big JSON
+var json = {...}
+
+// pack the big JSON
+var packed = jsonpack.<span class="apidocCodeKeywordSpan">pack</span>(json);
+
+// do stuff...
+
+// And then unpack the packed
+var json = jsonpack.unpack(packed);
+```
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.jsonpack.unpack" id="apidoc.element.jsonpack.unpack">
+        function <span class="apidocSignatureSpan">jsonpack.</span>unpack
+        <span class="apidocSignatureSpan">(packed, options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">unpack = function (packed, options) {
+
+			// Canonizes the options
+			options = options || {};
+
+			// A raw buffer
+			var rawBuffers = packed.split(&#x27;^&#x27;);
+
+			// Create a dictionary
+			options.verbose &#x26;&#x26; console.log(&#x27;Building dictionary&#x27;);
+			var dictionary = [];
+
+			// Add the strings values
+			var buffer = rawBuffers[0];
+			if (buffer !== &#x27;&#x27;) {
+				buffer = buffer.split(&#x27;|&#x27;);
+				options.verbose &#x26;&#x26; console.log(&#x27;Parse the strings dictionary&#x27;);
+				for (var i=0, n=buffer.length; i&#x3c;n; i++){
+					dictionary.push(_decode(buffer[i]));
+				}
+			}
+
+			// Add the integers values
+			buffer = rawBuffers[1];
+			if (buffer !== &#x27;&#x27;) {
+				buffer = buffer.split(&#x27;|&#x27;);
+				options.verbose &#x26;&#x26; console.log(&#x27;Parse the integers dictionary&#x27;);
+				for (var i=0, n=buffer.length; i&#x3c;n; i++){
+					dictionary.push(_base36To10(buffer[i]));
+				}
+			}
+
+			// Add the floats values
+			buffer = rawBuffers[2];
+			if (buffer !== &#x27;&#x27;) {
+				buffer = buffer.split(&#x27;|&#x27;)
+				options.verbose &#x26;&#x26; console.log(&#x27;Parse the floats dictionary&#x27;);
+				for (var i=0, n=buffer.length; i&#x3c;n; i++){
+					dictionary.push(parseFloat(buffer[i]));
+				}
+			}
+			// Free memory
+			buffer = null;
+
+			options.verbose &#x26;&#x26; console.log(&#x27;Tokenizing the structure&#x27;);
+
+			// Tokenizer the structure
+			var number36 = &#x27;&#x27;;
+			var tokens = [];
+			var len=rawBuffers[3].length;
+			for (var i = 0; i &#x3c; len; i++) {
+				var symbol = rawBuffers[3].charAt(i);
+				if (symbol === &#x27;|&#x27; || symbol === &#x27;$&#x27; || symbol === &#x27;@&#x27; || symbol === &#x27;]&#x27;) {
+					if (number36) {
+						tokens.push(_base36To10(number36));
+						number36 = &#x27;&#x27;;
+					}
+					symbol !== &#x27;|&#x27; &#x26;&#x26; tokens.push(symbol);
+				} else {
+					number36 += symbol;
+				}
+			}
+
+			// A shorthand proxy for tokens.length
+			var tokensLength = tokens.length;
+
+			// The index of the next token to read
+			var tokensIndex = 0;
+
+			options.verbose &#x26;&#x26; console.log(&#x27;Starting recursive parser&#x27;);
+
+			return (function recursiveUnpackerParser() {
+
+				// Maybe &#x27;$&#x27; (object) or &#x27;@&#x27; (array)
+				var type = tokens[tokensIndex++];
+
+				options.verbose &#x26;&#x26; console.log(&#x27;Reading collection type &#x27; + (type === &#x27;$&#x27; ? &#x27;object&#x27; : &#x27;Array&#x27;));
+
+				// Parse an array
+				if (type === &#x27;@&#x27;) {
+
+					var node = [];
+
+					for (; tokensIndex &#x3c; tokensLength; tokensIndex++) {
+						var value = tokens[tokensIndex];
+						options.verbose &#x26;&#x26; console.log(&#x27;Read &#x27; + value + &#x27; symbol&#x27;);
+						if (value === &#x27;]&#x27;)
+							return node;
+						if (value === &#x27;@&#x27; || value === &#x27;$&#x27;) {
+							node.push(recursiveUnpackerParser());
+						} else {
+							switch(value) {
+								case TOKEN_TRUE:
+									node.push(true);
+									break;
+								case TOKEN_FALSE:
+									node.push(false);
+									break;
+								case TOKEN_NULL:
+									node.push(null);
+									break;
+								case TOKEN_UNDEFINED:
+									node.push(undefined);
+									break;
+								case TOKEN_EMPTY_STRING:
+									node.push(&#x27;&#x27;);
+									break;
+								default:
+									node.push(dictionary[value]);
+							}
+
+						}
+					}
+
+					options.verbose &#x26;&#x26; console.log(&#x27;Parsed &#x27; + this.JSON.stringify(node));
+
+					return node;
+
+				}
+
+				// Parse a object
+				if (type === &#x27;$&#x27;) {
+					var node = {};
+
+					for (; tokensIndex &#x3c; tokensLength; tokensIndex++) {
+
+						var key = tokens[tokensIndex];
+
+						if (key === &#x27;]&#x27;)
+							return node;
+
+						if (key === TOKEN_EMPTY_STRING)
+							key = &#x27;&#x27;;
+						else
+							key = dictionary[key];
+
+						var value = tokens[++tokensIndex];
+
+						if (value === &#x27;@&#x27; || value === &#x27;$&#x27;) {
+							node[key] = recursiveUnpackerParser();
+						} else {
+							switch(value) {
+								case TOKEN_TRUE:
+									node[key] = true;
+									break;
+								case TOKEN_FALSE:
+									node[key] = false;
+									break;
+								case TOKEN_NULL:
+									node[key] = null;
+									break;
+								case TOKEN_UNDEFINED:
+									node[key] = undefined;
+									break;
+								case TOKEN_EMPTY_STRING:
+									node[key] = &#x27;&#x27;;
+									break;
+								default:
+									node[key] = dictionary[value];
+							}
+
+						}
+					}
+
+					options.verbose &#x26;&#x26; console.log(&#x27;Parsed &#x27; + this.JSON.stringify(node));
+
+					return node;
+				}
+
+				throw new TypeError(&#x27;Bad token &#x27; + typ ...</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+// pack the big JSON
+var packed = jsonpack.pack(json);
+
+// do stuff...
+
+// And then unpack the packed
+var json = jsonpack.<span class="apidocCodeKeywordSpan">unpack</span>(packed);
+```
+
+## Installation
+
+**jsonpack** can be installed via [cpm][cpm], [volo][volo] or [npm][npm], or simply [downloaded][download].
+
+Via cpm:
+...</pre></li>
+    </ul>
+
+
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.jsonpack.pack" id="apidoc.module.jsonpack.pack">module jsonpack.pack</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.jsonpack.pack.pack" id="apidoc.element.jsonpack.pack.pack">
+        function <span class="apidocSignatureSpan">jsonpack.</span>pack
+        <span class="apidocSignatureSpan">(json, options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">pack = function (json, options) {
+
+			// Canonizes the options
+			options = options || {};
+
+			// A shorthand for debugging
+			var verbose = options.verbose || false;
+
+			verbose &#x26;&#x26; console.log(&#x27;Normalize the JSON Object&#x27;);
+
+			// JSON as Javascript Object (Not string representation)
+			json = typeof json === &#x27;string&#x27; ? this.JSON.parse(json) : json;
+
+			verbose &#x26;&#x26; console.log(&#x27;Creating a empty dictionary&#x27;);
+
+			// The dictionary
+			var dictionary = {
+				strings : [],
+				integers : [],
+				floats : []
+			};
+
+			verbose &#x26;&#x26; console.log(&#x27;Creating the AST&#x27;);
+
+			// The AST
+			var ast = (function recursiveAstBuilder(item) {
+
+				verbose &#x26;&#x26; console.log(&#x27;Calling recursiveAstBuilder with &#x27; + this.JSON.stringify(item));
+
+				// The type of the item
+				var type = typeof item;
+
+				// Case 7: The item is null
+				if (item === null) {
+					return {
+						type : &#x27;null&#x27;,
+						index : TOKEN_NULL
+					};
+				}
+				
+				//add undefined
+				if (typeof item === &#x27;undefined&#x27;) {
+					return {
+						type : &#x27;undefined&#x27;,
+						index : TOKEN_UNDEFINED
+					};
+				}
+
+				// Case 1: The item is Array Object
+				if ( item instanceof Array) {
+
+					// Create a new sub-AST of type Array (@)
+					var ast = [&#x27;@&#x27;];
+
+					// Add each items
+					for (var i in item) {
+						
+						if (!item.hasOwnProperty(i)) continue;
+
+						ast.push(recursiveAstBuilder(item[i]));
+					}
+
+					// And return
+					return ast;
+
+				}
+
+				// Case 2: The item is Object
+				if (type === &#x27;object&#x27;) {
+
+					// Create a new sub-AST of type Object ($)
+					var ast = [&#x27;$&#x27;];
+
+					// Add each items
+					for (var key in item) {
+
+						if (!item.hasOwnProperty(key))
+							continue;
+
+						ast.push(recursiveAstBuilder(key));
+						ast.push(recursiveAstBuilder(item[key]));
+					}
+
+					// And return
+					return ast;
+
+				}
+
+				// Case 3: The item empty string
+				if (item === &#x27;&#x27;) {
+					return {
+						type : &#x27;empty&#x27;,
+						index : TOKEN_EMPTY_STRING
+					};
+				}
+
+				// Case 4: The item is String
+				if (type === &#x27;string&#x27;) {
+
+					// The index of that word in the dictionary
+					var index = _indexOf.call(dictionary.strings, item);
+
+					// If not, add to the dictionary and actualize the index
+					if (index == -1) {
+						dictionary.strings.push(_encode(item));
+						index = dictionary.strings.length - 1;
+					}
+
+					// Return the token
+					return {
+						type : &#x27;strings&#x27;,
+						index : index
+					};
+				}
+
+				// Case 5: The item is integer
+				if (type === &#x27;number&#x27; &#x26;&#x26; item % 1 === 0) {
+
+					// The index of that number in the dictionary
+					var index = _indexOf.call(dictionary.integers, item);
+
+					// If not, add to the dictionary and actualize the index
+					if (index == -1) {
+						dictionary.integers.push(_base10To36(item));
+						index = dictionary.integers.length - 1;
+					}
+
+					// Return the token
+					return {
+						type : &#x27;integers&#x27;,
+						index : index
+					};
+				}
+
+				// Case 6: The item is float
+				if (type === &#x27;number&#x27;) {
+					// The index of that number in the dictionary
+					var index = _indexOf.call(dictionary.floats, item);
+
+					// If not, add to the dictionary and actualize the index
+					if (index == -1) {
+						// Float not use base 36
+						dictionary.floats.push(item);
+						index = dictionary.floats.length - 1;
+					}
+
+					// Return the token
+					return {
+						type : &#x27;floats&#x27;,
+						index : index
+					};
+				}
+
+				// Case 7: The item is boolean
+				if (type === &#x27;boolean&#x27;) {
+					return {
+						type : &#x27;boolean&#x27;,
+						index : item ? TOKEN_TRUE : TOKEN_FALSE
+					};
+				}
+
+				// Default
+				throw new Error(&#x27;Unexpected argument of type &#x27; + typeof (item));
+
+			})(json);
+
+			// A set of shorthands proxies for the length of the dictionaries
+			var stringLength = dictionary.strings.length;
+			var integerLength = dictionary.integers.length;
+			var floatLength = dictionary.floats.length;
+
+			verbose &#x26;&#x26; console.log(&#x27;Parsing the dictionary&#x27;);
+
+			// Create a raw dictionary
+			var packed = dictionary.strings.join(&#x27;|&#x27;);
+			packed += &#x27;^&#x27; + dictionary.integers.join(&#x27;|&#x27;);
+			packed += &#x27;^&#x27; + dictionary.floats.join(&#x27;|&#x27;);
+
+			verbose &#x26;&#x26; console.log(&#x27;Parsing the structu ...</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+**Quick example**
+```javascript
+// big JSON
+var json = {...}
+
+// pack the big JSON
+var packed = jsonpack.<span class="apidocCodeKeywordSpan">pack</span>(json);
+
+// do stuff...
+
+// And then unpack the packed
+var json = jsonpack.unpack(packed);
+```
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.jsonpack.unpack" id="apidoc.module.jsonpack.unpack">module jsonpack.unpack</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.jsonpack.unpack.unpack" id="apidoc.element.jsonpack.unpack.unpack">
+        function <span class="apidocSignatureSpan">jsonpack.</span>unpack
+        <span class="apidocSignatureSpan">(packed, options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">unpack = function (packed, options) {
+
+			// Canonizes the options
+			options = options || {};
+
+			// A raw buffer
+			var rawBuffers = packed.split(&#x27;^&#x27;);
+
+			// Create a dictionary
+			options.verbose &#x26;&#x26; console.log(&#x27;Building dictionary&#x27;);
+			var dictionary = [];
+
+			// Add the strings values
+			var buffer = rawBuffers[0];
+			if (buffer !== &#x27;&#x27;) {
+				buffer = buffer.split(&#x27;|&#x27;);
+				options.verbose &#x26;&#x26; console.log(&#x27;Parse the strings dictionary&#x27;);
+				for (var i=0, n=buffer.length; i&#x3c;n; i++){
+					dictionary.push(_decode(buffer[i]));
+				}
+			}
+
+			// Add the integers values
+			buffer = rawBuffers[1];
+			if (buffer !== &#x27;&#x27;) {
+				buffer = buffer.split(&#x27;|&#x27;);
+				options.verbose &#x26;&#x26; console.log(&#x27;Parse the integers dictionary&#x27;);
+				for (var i=0, n=buffer.length; i&#x3c;n; i++){
+					dictionary.push(_base36To10(buffer[i]));
+				}
+			}
+
+			// Add the floats values
+			buffer = rawBuffers[2];
+			if (buffer !== &#x27;&#x27;) {
+				buffer = buffer.split(&#x27;|&#x27;)
+				options.verbose &#x26;&#x26; console.log(&#x27;Parse the floats dictionary&#x27;);
+				for (var i=0, n=buffer.length; i&#x3c;n; i++){
+					dictionary.push(parseFloat(buffer[i]));
+				}
+			}
+			// Free memory
+			buffer = null;
+
+			options.verbose &#x26;&#x26; console.log(&#x27;Tokenizing the structure&#x27;);
+
+			// Tokenizer the structure
+			var number36 = &#x27;&#x27;;
+			var tokens = [];
+			var len=rawBuffers[3].length;
+			for (var i = 0; i &#x3c; len; i++) {
+				var symbol = rawBuffers[3].charAt(i);
+				if (symbol === &#x27;|&#x27; || symbol === &#x27;$&#x27; || symbol === &#x27;@&#x27; || symbol === &#x27;]&#x27;) {
+					if (number36) {
+						tokens.push(_base36To10(number36));
+						number36 = &#x27;&#x27;;
+					}
+					symbol !== &#x27;|&#x27; &#x26;&#x26; tokens.push(symbol);
+				} else {
+					number36 += symbol;
+				}
+			}
+
+			// A shorthand proxy for tokens.length
+			var tokensLength = tokens.length;
+
+			// The index of the next token to read
+			var tokensIndex = 0;
+
+			options.verbose &#x26;&#x26; console.log(&#x27;Starting recursive parser&#x27;);
+
+			return (function recursiveUnpackerParser() {
+
+				// Maybe &#x27;$&#x27; (object) or &#x27;@&#x27; (array)
+				var type = tokens[tokensIndex++];
+
+				options.verbose &#x26;&#x26; console.log(&#x27;Reading collection type &#x27; + (type === &#x27;$&#x27; ? &#x27;object&#x27; : &#x27;Array&#x27;));
+
+				// Parse an array
+				if (type === &#x27;@&#x27;) {
+
+					var node = [];
+
+					for (; tokensIndex &#x3c; tokensLength; tokensIndex++) {
+						var value = tokens[tokensIndex];
+						options.verbose &#x26;&#x26; console.log(&#x27;Read &#x27; + value + &#x27; symbol&#x27;);
+						if (value === &#x27;]&#x27;)
+							return node;
+						if (value === &#x27;@&#x27; || value === &#x27;$&#x27;) {
+							node.push(recursiveUnpackerParser());
+						} else {
+							switch(value) {
+								case TOKEN_TRUE:
+									node.push(true);
+									break;
+								case TOKEN_FALSE:
+									node.push(false);
+									break;
+								case TOKEN_NULL:
+									node.push(null);
+									break;
+								case TOKEN_UNDEFINED:
+									node.push(undefined);
+									break;
+								case TOKEN_EMPTY_STRING:
+									node.push(&#x27;&#x27;);
+									break;
+								default:
+									node.push(dictionary[value]);
+							}
+
+						}
+					}
+
+					options.verbose &#x26;&#x26; console.log(&#x27;Parsed &#x27; + this.JSON.stringify(node));
+
+					return node;
+
+				}
+
+				// Parse a object
+				if (type === &#x27;$&#x27;) {
+					var node = {};
+
+					for (; tokensIndex &#x3c; tokensLength; tokensIndex++) {
+
+						var key = tokens[tokensIndex];
+
+						if (key === &#x27;]&#x27;)
+							return node;
+
+						if (key === TOKEN_EMPTY_STRING)
+							key = &#x27;&#x27;;
+						else
+							key = dictionary[key];
+
+						var value = tokens[++tokensIndex];
+
+						if (value === &#x27;@&#x27; || value === &#x27;$&#x27;) {
+							node[key] = recursiveUnpackerParser();
+						} else {
+							switch(value) {
+								case TOKEN_TRUE:
+									node[key] = true;
+									break;
+								case TOKEN_FALSE:
+									node[key] = false;
+									break;
+								case TOKEN_NULL:
+									node[key] = null;
+									break;
+								case TOKEN_UNDEFINED:
+									node[key] = undefined;
+									break;
+								case TOKEN_EMPTY_STRING:
+									node[key] = &#x27;&#x27;;
+									break;
+								default:
+									node[key] = dictionary[value];
+							}
+
+						}
+					}
+
+					options.verbose &#x26;&#x26; console.log(&#x27;Parsed &#x27; + this.JSON.stringify(node));
+
+					return node;
+				}
+
+				throw new TypeError(&#x27;Bad token &#x27; + typ ...</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+// pack the big JSON
+var packed = jsonpack.pack(json);
+
+// do stuff...
+
+// And then unpack the packed
+var json = jsonpack.<span class="apidocCodeKeywordSpan">unpack</span>(packed);
+```
+
+## Installation
+
+**jsonpack** can be installed via [cpm][cpm], [volo][volo] or [npm][npm], or simply [downloaded][download].
+
+Via cpm:
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
