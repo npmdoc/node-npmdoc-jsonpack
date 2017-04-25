@@ -1,4 +1,7 @@
-# api documentation for  [jsonpack (v1.1.5)](https://github.com/sapienlab/jsonpack)  [![npm package](https://img.shields.io/npm/v/npmdoc-jsonpack.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-jsonpack) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-jsonpack.svg)](https://travis-ci.org/npmdoc/node-npmdoc-jsonpack)
+# npmdoc-jsonpack
+
+#### basic api documentation for  [jsonpack (v1.1.5)](https://github.com/sapienlab/jsonpack)  [![npm package](https://img.shields.io/npm/v/npmdoc-jsonpack.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-jsonpack) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-jsonpack.svg)](https://travis-ci.org/npmdoc/node-npmdoc-jsonpack)
+
 #### A compression algorithm for JSON
 
 [![NPM](https://nodei.co/npm/jsonpack.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/jsonpack)
@@ -69,7 +72,8 @@
     "version": "1.1.5",
     "volo": {
         "baseDir": "."
-    }
+    },
+    "bin": {}
 }
 ```
 
